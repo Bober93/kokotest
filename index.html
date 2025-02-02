@@ -1,49 +1,37 @@
-<?php
-if (!empty($_SERVER['HTTP_X_FORWARDED_FOR'])) {
-    $ips = explode(',', $_SERVER['HTTP_X_FORWARDED_FOR']);
-    $user_ip = trim($ips[0]); // Отримуємо перший IP з ланцюга
-} elseif (!empty($_SERVER['CF-Connecting-IP'])) { // Cloudflare
-    $user_ip = $_SERVER['CF-Connecting-IP'];
-} else {
-    $user_ip = $_SERVER['REMOTE_ADDR'];
-}
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Перевірка країни</title>
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            fetch("https://ipinfo.io/json?token=fc5b15b45deb91")
+                .then(response => response.json())
+                .then(data => {
+                    let countryCode = (data.country || "").toUpperCase();
 
-// API для отримання країни (використовуємо IP користувача)
-$api_url = "https://ipinfo.io/{$user_ip}/json?token=fc5b15b45deb91";
-$response = @file_get_contents($api_url);
-$data = json_decode($response, true);
+                    console.log("User IP:", data.ip, "| Country:", countryCode);
 
-// Якщо API не відповідає або повернув помилку
-if (!$data || !isset($data['country'])) {
-    http_response_code(404);
-    include "404.html"; // Використовуємо окрему 404 сторінку
-    exit();
-}
+                    const allowedCountries = ["US", "GB", "CA", "DE", "UA"];
+                    const blockedCountries = ["RU", "CN", "KP", "IR"];
 
-// Отримуємо код країни
-$countryCode = strtoupper(trim($data['country']));
-
-// Логування (тимчасово)
-file_put_contents("log.txt", "User IP: " . $user_ip . " | Country: " . $countryCode . PHP_EOL, FILE_APPEND);
-
-// Списки країн
-$allowedCountries = ["US", "GB", "CA", "DE", "UA"]; // Дозволені країни
-$blockedCountries = ["RU", "CN", "KP", "IR"]; // Заборонені країни
-
-// 🔹 Перевіряємо країну
-if (in_array($countryCode, $blockedCountries)) {
-    http_response_code(404);
-    include "404.html";
-    exit();
-}
-
-if (in_array($countryCode, $allowedCountries)) {
-    header("Location: https://penis.is-best.net/");
-    exit();
-}
-
-// Якщо країна не в списках → 404
-http_response_code(404);
-include "404.html";
-exit();
-?>
+                    if (blockedCountries.includes(countryCode)) {
+                        window.location.href = "404.html";
+                    } else if (allowedCountries.includes(countryCode)) {
+                        window.location.href = "https://penis.is-best.net/";
+                    } else {
+                        window.location.href = "404.html";
+                    }
+                })
+                .catch(error => {
+                    console.error("Помилка отримання даних:", error);
+                    window.location.href = "404.html";
+                });
+        });
+    </script>
+</head>
+<body>
+    <h1>Перевіряємо вашу країну...</h1>
+</body>
+</html>
